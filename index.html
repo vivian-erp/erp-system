@@ -58,7 +58,7 @@
       text-align:center;
     }
 
-    /* 原系统样式 */
+    /* 主系统样式 */
     .tabs{padding:10px;background:white;display:flex;flex-wrap:wrap;}
     .tab-btn{
       flex:1 1 120px;
@@ -241,7 +241,6 @@
             <th>原材料</th>
             <th>库存</th>
             <th>型号</th>
-            <!-- 新增：入库时间表头 -->
             <th>入库时间</th>
             <th>操作</th>
           </tr>
@@ -264,6 +263,14 @@
     <!-- BOM管理 -->
     <div id="bom" class="content">
       <h2>BOM管理</h2>
+
+      <!-- BOM 产能计算区 -->
+      <div style="margin-bottom:10px;">
+        <input type="text" id="bomCalcProduct" placeholder="输入产品名称进行产能计算">
+        <button type="button" onclick="calcBomCapacity()">计算可生产套数</button>
+        <span id="bomCalcResult" style="margin-left:16px;font-weight:bold;color:#218c4f;"></span>
+      </div>
+
       <input type="text" id="bomProduct" placeholder="产品名称">
       <input type="text" id="bomMaterial" placeholder="原材料名称">
       <input type="number" id="bomQty" placeholder="用量" min="1">
@@ -373,10 +380,9 @@
     </div>
   </div>
 
-  <!-- 业务脚本：登录 + 原有逻辑 -->
+  <!-- 业务脚本：登录 + 业务逻辑 + BOM 产能计算 -->
   <script>
     // ========== 简单登录逻辑 ==========
-    // 这里写死账号密码：可改
     const VALID_USER = 'admin';
     const VALID_PASS = '123456';
 
@@ -391,21 +397,16 @@
       }
       if(u === VALID_USER && p === VALID_PASS){
         errEl.textContent = '';
-        // 记住登录状态（简单版本，存在本地）
         localStorage.setItem('erp_logged_in','1');
-
-        // 显示系统、隐藏登录
         document.getElementById('loginContainer').style.display='none';
         document.getElementById('mainApp').style.display='block';
-
-        // 初始化系统
         onAppInit();
       }else{
         errEl.textContent = '账号或密码错误';
       }
     }
 
-    // 刷新页面时，如果已经登录过，就直接进系统
+    // 刷新后如果已登录，直接进入系统
     window.addEventListener('load', function(){
       const logged = localStorage.getItem('erp_logged_in') === '1';
       if(logged){
@@ -415,21 +416,18 @@
       }
     });
 
-    // 退出登录（可在将来加一个“退出登录”按钮）
     function logout(){
       localStorage.removeItem('erp_logged_in');
       location.reload();
     }
 
-    // ========== 以下是原 ERP 系统的初始化入口 ==========
+    // ========== ERP 初始化 ==========
     function onAppInit(){
       openTab('order');
-      // 设置每页默认值
       document.getElementById('orderPageSizeSelect').value = orderPageSize;
       document.getElementById('productPageSizeSelect').value = productPageSize;
       document.getElementById('materialPageSizeSelect').value = materialPageSize;
       document.getElementById('workPageSizeSelect').value = workPageSize;
-      // 初始渲染
       renderOrders();
       renderProducts();
       renderMaterials();
@@ -440,7 +438,6 @@
       renderLogs();
     }
 
-    // ========== 下面保持你的原业务逻辑（分页版） ==========
     function openTab(id){
       const target = document.getElementById(id);
       if(!target) return;
@@ -463,6 +460,7 @@
       if(id==='report') renderReport();
     }
 
+    // ========== 数据存储 ==========
     let orders = JSON.parse(localStorage.getItem('orders')||'[]');
     let products = JSON.parse(localStorage.getItem('products')||'[]');
     let materials = JSON.parse(localStorage.getItem('materials')||'[]');
@@ -498,6 +496,7 @@
       localStorage.setItem('logs',JSON.stringify(logs));
     }
 
+    // ========== 公共勾选 & 分页 ==========
     function selectAll(type){
       let data = [];
       let size = 10;
@@ -565,7 +564,7 @@
       renderWorks();
     }
 
-    // 订单
+    // ========== 订单 ==========
     function addOrder(){
       let id=document.getElementById('orderId').value.trim();
       let p=document.getElementById('orderProduct').value.trim();
@@ -671,7 +670,7 @@
       openTab('complaint');
     }
 
-    // 成品
+    // ========== 成品 ==========
     function addProduct(){
       let name=document.getElementById('productName').value.trim();
       let qty=parseInt(document.getElementById('productQty').value)||0;
@@ -752,7 +751,7 @@
       openTab('quality');
     }
 
-    // 原材料
+    // ========== 原材料 ==========
     function addMaterialIn(){
       let name=document.getElementById('materialName').value.trim();
       let qty=parseInt(document.getElementById('materialQty').value)||0;
@@ -760,13 +759,11 @@
       if(!name||!qty) return alert('请填写完整');
       if(qty<=0) return alert('数量必须大于0');
 
-      // 新增：记录入库时间
       let nowTime = new Date().toLocaleString();
 
       let m=materials.find(x=>x.name===name && (model?x.model===model:true));
       if(m){
         m.qty+=qty;
-        // 对已有材料，不改原时间；只对新建记录时间
       }else{
         materials.push({name,qty,model,time:nowTime});
       }
@@ -794,7 +791,6 @@
                 m.qty += parseInt(qty)||0;
                 if(model) m.model = model;
               }else{
-                // 新增：导入时也记录入库时间
                 materials.push({
                   name,
                   qty:parseInt(qty)||0,
@@ -827,7 +823,6 @@
                 m.qty += qty;
                 if(model) m.model = model;
               }else{
-                // 新增：图片识别导入时记录入库时间
                 materials.push({name,qty,model,time:new Date().toLocaleString()});
               }
               count++;
@@ -866,7 +861,6 @@
             <input type="number" min="0" value="${m.qty}" style="width:70px" onchange="changeMaterialQty('${key}', this.value)">
           </td>
           <td>${m.model||''}</td>
-          <!-- 新增：入库时间列显示 -->
           <td>${m.time || ''}</td>
           <td>
             <button type="button" class="action-btn" onclick="delMaterial('${key}')">删除</button>
@@ -911,7 +905,7 @@
       }
     }
 
-    // BOM
+    // ========== BOM ==========
     function addBom(){
       let product=document.getElementById('bomProduct').value.trim();
       let material=document.getElementById('bomMaterial').value.trim();
@@ -946,7 +940,51 @@
       }
     }
 
-    // 工单
+    // BOM 产能计算
+    function calcBomCapacity(){
+      const product = document.getElementById('bomCalcProduct').value.trim();
+      const resultEl = document.getElementById('bomCalcResult');
+      if(!product) {
+        resultEl.textContent = '请输入产品名称';
+        resultEl.style.color = '#e74c3c';
+        return;
+      }
+      const bomItems = boms.filter(b=>b.product===product);
+      if(bomItems.length===0){
+        resultEl.textContent = '未找到该产品的BOM';
+        resultEl.style.color = '#e74c3c';
+        return;
+      }
+      let minSet = Infinity;
+      let bottleneck = '';
+      for(const item of bomItems){
+        const m = materials.find(mat=>mat.name===item.material);
+        if(!m || !m.qty){
+          minSet = 0;
+          bottleneck = item.material;
+          break;
+        }
+        const canMake = Math.floor(m.qty / item.qty);
+        if(canMake < minSet){
+          minSet = canMake;
+          bottleneck = item.material;
+        }
+      }
+      if(minSet===Infinity){
+        resultEl.textContent = '原材料库存异常';
+        resultEl.style.color = '#e74c3c';
+        return;
+      }
+      if(minSet>0){
+        resultEl.textContent = `最多可生产 ${minSet} 套（瓶颈物料：${bottleneck}）`;
+        resultEl.style.color = '#218c4f';
+      }else{
+        resultEl.textContent = `原材料【${bottleneck}】库存不足，无法生产`;
+        resultEl.style.color = '#e74c3c';
+      }
+    }
+
+    // ========== 工单 ==========
     function addWork(){
       let p=document.getElementById('workProduct').value.trim();
       let q=parseInt(document.getElementById('workQty').value)||0;
@@ -1020,7 +1058,7 @@
       }
     }
 
-    // 投诉
+    // ========== 投诉 ==========
     function addComplaint(){
       let orderId=document.getElementById('complaintOrderId').value.trim();
       let reason=document.getElementById('complaintReason').value.trim();
@@ -1058,7 +1096,7 @@
       save();renderComplaints();
     }
 
-    // 品质
+    // ========== 品质 ==========
     function addQuality(){
       let product=document.getElementById('qualityProduct').value.trim();
       let desc=document.getElementById('qualityDesc').value.trim();
@@ -1096,7 +1134,7 @@
       save();renderQualities();
     }
 
-    // 报表
+    // ========== 报表 ==========
     function renderReport(){
       let totalOrders = orders.length;
       let totalProducts = products.reduce((s,p)=>s+p.qty,0);
@@ -1112,7 +1150,7 @@
       document.getElementById('reportContent').innerHTML = html;
     }
 
-    // 日志
+    // ========== 日志 ==========
     function renderLogs(){
       let h='';
       logs.forEach(l=>{
