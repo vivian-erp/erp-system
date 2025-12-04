@@ -241,6 +241,8 @@
             <th>原材料</th>
             <th>库存</th>
             <th>型号</th>
+            <!-- 新增：入库时间表头 -->
+            <th>入库时间</th>
             <th>操作</th>
           </tr>
         </thead>
@@ -757,9 +759,17 @@
       let model=document.getElementById('materialModel').value.trim();
       if(!name||!qty) return alert('请填写完整');
       if(qty<=0) return alert('数量必须大于0');
+
+      // 新增：记录入库时间
+      let nowTime = new Date().toLocaleString();
+
       let m=materials.find(x=>x.name===name && (model?x.model===model:true));
-      if(m) m.qty+=qty;
-      else materials.push({name,qty,model});
+      if(m){
+        m.qty+=qty;
+        // 对已有材料，不改原时间；只对新建记录时间
+      }else{
+        materials.push({name,qty,model,time:nowTime});
+      }
       addLog(`原材料入库：${name} +${qty} ${model}`);
       save();renderMaterials();
       document.getElementById('materialName').value='';
@@ -784,7 +794,13 @@
                 m.qty += parseInt(qty)||0;
                 if(model) m.model = model;
               }else{
-                materials.push({name,qty:parseInt(qty)||0,model:model||''});
+                // 新增：导入时也记录入库时间
+                materials.push({
+                  name,
+                  qty:parseInt(qty)||0,
+                  model:model||'',
+                  time:new Date().toLocaleString()
+                });
               }
               count++;
             }
@@ -811,7 +827,8 @@
                 m.qty += qty;
                 if(model) m.model = model;
               }else{
-                materials.push({name,qty,model});
+                // 新增：图片识别导入时记录入库时间
+                materials.push({name,qty,model,time:new Date().toLocaleString()});
               }
               count++;
             }
@@ -849,12 +866,14 @@
             <input type="number" min="0" value="${m.qty}" style="width:70px" onchange="changeMaterialQty('${key}', this.value)">
           </td>
           <td>${m.model||''}</td>
+          <!-- 新增：入库时间列显示 -->
+          <td>${m.time || ''}</td>
           <td>
             <button type="button" class="action-btn" onclick="delMaterial('${key}')">删除</button>
           </td>
         </tr>`;
       }
-      document.getElementById('materialList').innerHTML=h||'<tr><td colspan="5">暂无原材料</td></tr>';
+      document.getElementById('materialList').innerHTML=h||'<tr><td colspan="6">暂无原材料</td></tr>';
       let pageHtml = '';
       for(let i=1;i<=totalPages;i++){
         pageHtml += `<button type="button" class="page-btn" ${materialPage===i?'disabled':''} onclick="materialPage=${i};renderMaterials()">${i}</button>`;
