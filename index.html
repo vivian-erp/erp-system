@@ -1,0 +1,1109 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <title>生产管理ERP系统 - 登录</title>
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>
+    body{font-family:微软雅黑,Arial;margin:0;background:#f7f9fa;}
+    header{background:#2c3e50;color:white;text-align:center;padding:20px;font-size:24px;}
+
+    /* 登录区域样式 */
+    #loginContainer{
+      max-width:380px;
+      margin:60px auto;
+      background:#fff;
+      border-radius:8px;
+      box-shadow:0 2px 8px rgba(0,0,0,.1);
+      padding:20px 24px 28px;
+    }
+    #loginContainer h2{
+      margin-top:0;
+      text-align:center;
+      color:#2c3e50;
+    }
+    .login-row{
+      margin:12px 0;
+      display:flex;
+      flex-direction:column;
+    }
+    .login-row label{
+      font-size:14px;
+      color:#555;
+      margin-bottom:4px;
+    }
+    .login-row input{
+      padding:8px;
+      border-radius:6px;
+      border:1px solid #ddd;
+      font-size:15px;
+    }
+    #loginBtn{
+      width:100%;
+      margin-top:16px;
+      padding:9px;
+      border-radius:6px;
+      border:none;
+      cursor:pointer;
+      background:#27ae60;
+      color:#fff;
+      font-size:16px;
+    }
+    #loginBtn:hover{background:#218c4f;}
+    #loginError{
+      color:#e74c3c;
+      font-size:13px;
+      min-height:18px;
+      margin-top:8px;
+      text-align:center;
+    }
+
+    /* 原系统样式 */
+    .tabs{padding:10px;background:white;display:flex;flex-wrap:wrap;}
+    .tab-btn{
+      flex:1 1 120px;
+      min-width:100px;
+      max-width:180px;
+      padding:10px 0;
+      margin:5px;
+      background:#27ae60;
+      color:white;
+      border:none;
+      border-radius:8px;
+      cursor:pointer;
+    }
+    .tab-btn.active{background:#218c4f;}
+    .content{display:none;padding:20px;background:white;margin:15px;border-radius:8px;}
+    .content.active{display:block;}
+    input,button,select{padding:8px;margin:5px;border-radius:6px;border:1px solid #ddd;font-size:16px;}
+    button{color:white;background:#27ae60;border:none;cursor:pointer;}
+    button:hover{background:#218c4f;}
+    @media (max-width:600px){
+      header{font-size:18px;padding:12px;}
+      .tabs{flex-direction:column;}
+      .tab-btn{font-size:16px;}
+      .content{padding:8px;margin:6px;}
+      input,button,select{font-size:15px;}
+      table{font-size:13px;}
+      #loginContainer{margin:30px 10px;}
+    }
+    table{width:100%;border-collapse:collapse;margin-top:15px;}
+    th,td{border:1px solid #ddd;padding:8px;text-align:center;}
+    th{background:#34495e;color:white;}
+    .status-btn{background:#eee;color:#27ae60;border:none;padding:2px 8px;border-radius:4px;cursor:pointer;}
+    .action-btn{background:#27ae60;color:white;padding:4px 10px;border-radius:5px;border:none;cursor:pointer;}
+    .action-btn:hover{background:#218c4f;}
+    .page-btn{background:#27ae60;color:white;border:none;padding:4px 12px;border-radius:6px;margin:0 3px;cursor:pointer;}
+    .page-btn:disabled{background:#ccc;color:#fff;cursor:default;}
+    select[multiple]{height:80px;}
+    .group-title{background:#eafaf1;color:#218c4f;font-weight:bold;padding:6px 0;}
+    .pager-bar{display:flex;align-items:center;justify-content:space-between;margin-top:8px;flex-wrap:wrap;font-size:14px;color:#555;}
+    .pager-left{margin-bottom:4px;}
+    .pager-select{padding:4px 6px;font-size:14px;}
+
+    /* 登录前隐藏主系统 */
+    #mainApp{display:none;}
+  </style>
+  <script src="https://cdn.jsdelivr.net/npm/tesseract.js@4.0.2/dist/tesseract.min.js"></script>
+</head>
+<body>
+  <header>生产管理ERP系统</header>
+
+  <!-- 登录界面 -->
+  <div id="loginContainer">
+    <h2>系统登录</h2>
+    <div class="login-row">
+      <label for="loginUser">账号</label>
+      <input type="text" id="loginUser" placeholder="请输入账号，如：admin">
+    </div>
+    <div class="login-row">
+      <label for="loginPass">密码</label>
+      <input type="password" id="loginPass" placeholder="请输入密码，如：123456">
+    </div>
+    <button id="loginBtn" onclick="doLogin()">登录</button>
+    <div id="loginError"></div>
+  </div>
+
+  <!-- 整个 ERP 主系统包一层，登录成功后显示 -->
+  <div id="mainApp">
+    <!-- 顶部导航栏 -->
+    <div class="tabs">
+      <button type="button" class="tab-btn active" data-tab="order" onclick="openTab('order')">订单管理</button>
+      <button type="button" class="tab-btn" data-tab="product" onclick="openTab('product')">成品管理</button>
+      <button type="button" class="tab-btn" data-tab="material" onclick="openTab('material')">原材料管理</button>
+      <button type="button" class="tab-btn" data-tab="bom" onclick="openTab('bom')">BOM管理</button>
+      <button type="button" class="tab-btn" data-tab="work" onclick="openTab('work')">生产工单</button>
+      <button type="button" class="tab-btn" data-tab="complaint" onclick="openTab('complaint')">订单投诉</button>
+      <button type="button" class="tab-btn" data-tab="quality" onclick="openTab('quality')">品质问题</button>
+      <button type="button" class="tab-btn" data-tab="report" onclick="openTab('report')">报表中心</button>
+      <button type="button" class="tab-btn" data-tab="log" onclick="openTab('log')">操作日志</button>
+    </div>
+
+    <!-- 订单管理 -->
+    <div id="order" class="content active">
+      <h2>订单管理</h2>
+      <div>
+        <input type="text" id="filterOrderId" placeholder="订单号筛选" oninput="orderPage=1;renderOrders()">
+        <input type="text" id="filterOrderProduct" placeholder="成品名称筛选" oninput="orderPage=1;renderOrders()">
+        <select id="filterOrderStatus" onchange="orderPage=1;renderOrders()">
+          <option value="">全部状态</option>
+          <option value="新订单">新订单</option>
+          <option value="生产中">生产中</option>
+          <option value="已出货">已出货</option>
+        </select>
+      </div>
+      <div>
+        <input type="text" id="orderId" placeholder="订单号">
+        <input type="text" id="orderProduct" placeholder="成品名称">
+        <input type="number" id="orderQty" placeholder="数量" min="1">
+        <input type="date" id="orderDue" placeholder="交期">
+        <button type="button" onclick="addOrder()">添加订单</button>
+        <button type="button" onclick="batchDelOrder()" class="action-btn">批量删除</button>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" onclick="selectAll('order')"></th>
+            <th>订单号</th>
+            <th>成品</th>
+            <th>数量</th>
+            <th>交期</th>
+            <th>状态</th>
+            <th>操作</th>
+            <th>投诉</th>
+          </tr>
+        </thead>
+        <tbody id="orderList"></tbody>
+      </table>
+      <div class="pager-bar">
+        <div class="pager-left">
+          每页显示：
+          <select id="orderPageSizeSelect" class="pager-select" onchange="changeOrderPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div id="orderPage"></div>
+      </div>
+    </div>
+
+    <!-- 成品管理 -->
+    <div id="product" class="content">
+      <h2>成品管理</h2>
+      <input type="text" id="filterProductName" placeholder="产品名称筛选" oninput="productPage=1;renderProducts()">
+      <input type="text" id="productName" placeholder="成品名称">
+      <input type="number" id="productQty" placeholder="入库数量" min="1">
+      <button type="button" onclick="addProduct()">入库</button>
+      <button type="button" onclick="batchDelProduct()" class="action-btn">批量删除</button>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" onclick="selectAll('product')"></th>
+            <th>成品</th>
+            <th>库存</th>
+            <th>操作</th>
+            <th>品质问题</th>
+          </tr>
+        </thead>
+        <tbody id="productList"></tbody>
+      </table>
+      <div class="pager-bar">
+        <div class="pager-left">
+          每页显示：
+          <select id="productPageSizeSelect" class="pager-select" onchange="changeProductPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div id="productPage"></div>
+      </div>
+    </div>
+
+    <!-- 原材料管理 -->
+    <div id="material" class="content">
+      <h2>原材料管理</h2>
+      <input type="text" id="filterMaterialName" placeholder="名称筛选" oninput="materialPage=1;renderMaterials()">
+      <input type="text" id="filterMaterialModel" placeholder="型号筛选" oninput="materialPage=1;renderMaterials()">
+      <input type="text" id="materialName" placeholder="原材料名称">
+      <input type="number" id="materialQty" placeholder="入库数量" min="1">
+      <input type="text" id="materialModel" placeholder="型号">
+      <button type="button" onclick="addMaterialIn()">入库</button>
+      <button type="button" onclick="batchDelMaterial()" class="action-btn">批量删除</button>
+      <input type="file" id="materialFile" accept=".csv,.png,.jpeg,.jpg" style="display:none" onchange="importMaterialFile(event)">
+      <button type="button" onclick="document.getElementById('materialFile').click()">导入文件/图片</button>
+      <span style="font-size:13px;color:#888;">支持CSV、PNG、JPEG文件</span>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" onclick="selectAll('material')"></th>
+            <th>原材料</th>
+            <th>库存</th>
+            <th>型号</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="materialList"></tbody>
+      </table>
+      <div class="pager-bar">
+        <div class="pager-left">
+          每页显示：
+          <select id="materialPageSizeSelect" class="pager-select" onchange="changeMaterialPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div id="materialPage"></div>
+      </div>
+    </div>
+
+    <!-- BOM管理 -->
+    <div id="bom" class="content">
+      <h2>BOM管理</h2>
+      <input type="text" id="bomProduct" placeholder="产品名称">
+      <input type="text" id="bomMaterial" placeholder="原材料名称">
+      <input type="number" id="bomQty" placeholder="用量" min="1">
+      <button type="button" onclick="addBom()">添加BOM</button>
+      <table>
+        <thead>
+          <tr>
+            <th>产品名称</th>
+            <th>原材料</th>
+            <th>用量</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="bomList"></tbody>
+      </table>
+    </div>
+
+    <!-- 生产工单 -->
+    <div id="work" class="content">
+      <h2>生产工单</h2>
+      <input type="text" id="workProduct" placeholder="成品名称">
+      <input type="number" id="workQty" placeholder="生产数量" min="1">
+      <button type="button" onclick="addWork()">新建工单</button>
+      <button type="button" onclick="batchDelWork()" class="action-btn">批量删除</button>
+      <table>
+        <thead>
+          <tr>
+            <th><input type="checkbox" onclick="selectAll('work')"></th>
+            <th>工单号</th>
+            <th>成品</th>
+            <th>数量</th>
+            <th>状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="workList"></tbody>
+      </table>
+      <div class="pager-bar">
+        <div class="pager-left">
+          每页显示：
+          <select id="workPageSizeSelect" class="pager-select" onchange="changeWorkPageSize(this.value)">
+            <option value="10">10</option>
+            <option value="30">30</option>
+            <option value="50">50</option>
+          </select>
+        </div>
+        <div id="workPage"></div>
+      </div>
+    </div>
+
+    <!-- 订单投诉管理 -->
+    <div id="complaint" class="content">
+      <h2>订单投诉管理</h2>
+      <input type="text" id="complaintOrderId" placeholder="订单号">
+      <input type="text" id="complaintReason" placeholder="投诉原因">
+      <button type="button" onclick="addComplaint()">发起投诉</button>
+      <table>
+        <thead>
+          <tr>
+            <th>订单号</th>
+            <th>原因</th>
+            <th>时间</th>
+            <th>处理状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="complaintList"></tbody>
+      </table>
+    </div>
+
+    <!-- 品质问题管理 -->
+    <div id="quality" class="content">
+      <h2>品质问题管理</h2>
+      <input type="text" id="qualityProduct" placeholder="成品名称">
+      <input type="text" id="qualityDesc" placeholder="问题描述">
+      <button type="button" onclick="addQuality()">登记问题</button>
+      <table>
+        <thead>
+          <tr>
+            <th>成品</th>
+            <th>问题描述</th>
+            <th>时间</th>
+            <th>处理状态</th>
+            <th>操作</th>
+          </tr>
+        </thead>
+        <tbody id="qualityList"></tbody>
+      </table>
+    </div>
+
+    <!-- 报表中心 -->
+    <div id="report" class="content">
+      <h2>报表中心</h2>
+      <div id="reportContent"></div>
+    </div>
+
+    <!-- 日志模块 -->
+    <div id="log" class="content">
+      <h2>
+        操作日志
+        <button type="button" onclick="clearLogs()" class="action-btn" style="float:right;margin-top:-4px;">清空</button>
+      </h2>
+      <table>
+        <thead><tr><th>时间</th><th>内容</th></tr></thead>
+        <tbody id="logList"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- 业务脚本：登录 + 原有逻辑 -->
+  <script>
+    // ========== 简单登录逻辑 ==========
+    // 这里写死账号密码：可改
+    const VALID_USER = 'admin';
+    const VALID_PASS = '123456';
+
+    function doLogin(){
+      const u = document.getElementById('loginUser').value.trim();
+      const p = document.getElementById('loginPass').value;
+      const errEl = document.getElementById('loginError');
+
+      if(!u || !p){
+        errEl.textContent = '请输入账号和密码';
+        return;
+      }
+      if(u === VALID_USER && p === VALID_PASS){
+        errEl.textContent = '';
+        // 记住登录状态（简单版本，存在本地）
+        localStorage.setItem('erp_logged_in','1');
+
+        // 显示系统、隐藏登录
+        document.getElementById('loginContainer').style.display='none';
+        document.getElementById('mainApp').style.display='block';
+
+        // 初始化系统
+        onAppInit();
+      }else{
+        errEl.textContent = '账号或密码错误';
+      }
+    }
+
+    // 刷新页面时，如果已经登录过，就直接进系统
+    window.addEventListener('load', function(){
+      const logged = localStorage.getItem('erp_logged_in') === '1';
+      if(logged){
+        document.getElementById('loginContainer').style.display='none';
+        document.getElementById('mainApp').style.display='block';
+        onAppInit();
+      }
+    });
+
+    // 退出登录（可在将来加一个“退出登录”按钮）
+    function logout(){
+      localStorage.removeItem('erp_logged_in');
+      location.reload();
+    }
+
+    // ========== 以下是原 ERP 系统的初始化入口 ==========
+    function onAppInit(){
+      openTab('order');
+      // 设置每页默认值
+      document.getElementById('orderPageSizeSelect').value = orderPageSize;
+      document.getElementById('productPageSizeSelect').value = productPageSize;
+      document.getElementById('materialPageSizeSelect').value = materialPageSize;
+      document.getElementById('workPageSizeSelect').value = workPageSize;
+      // 初始渲染
+      renderOrders();
+      renderProducts();
+      renderMaterials();
+      renderBoms();
+      renderWorks();
+      renderComplaints();
+      renderQualities();
+      renderLogs();
+    }
+
+    // ========== 下面保持你的原业务逻辑（分页版） ==========
+    function openTab(id){
+      const target = document.getElementById(id);
+      if(!target) return;
+
+      document.querySelectorAll('.content').forEach(el=>el.classList.remove('active'));
+      target.classList.add('active');
+
+      document.querySelectorAll('.tab-btn').forEach(btn=>{
+        btn.classList.toggle('active', btn.getAttribute('data-tab') === id);
+      });
+
+      if(id==='order') {orderPage=1; renderOrders();}
+      if(id==='product') {productPage=1; renderProducts();}
+      if(id==='material') {materialPage=1; renderMaterials();}
+      if(id==='bom') renderBoms();
+      if(id==='work') {workPage=1; renderWorks();}
+      if(id==='complaint') renderComplaints();
+      if(id==='quality') renderQualities();
+      if(id==='log') renderLogs();
+      if(id==='report') renderReport();
+    }
+
+    let orders = JSON.parse(localStorage.getItem('orders')||'[]');
+    let products = JSON.parse(localStorage.getItem('products')||'[]');
+    let materials = JSON.parse(localStorage.getItem('materials')||'[]');
+    let boms = JSON.parse(localStorage.getItem('boms')||'[]');
+    let works = JSON.parse(localStorage.getItem('works')||'[]');
+    let complaints = JSON.parse(localStorage.getItem('complaints')||'[]');
+    let qualities = JSON.parse(localStorage.getItem('qualities')||'[]');
+    let logs = JSON.parse(localStorage.getItem('logs')||'[]');
+
+    let orderPageSize = 10, productPageSize = 10, materialPageSize = 10, workPageSize = 10;
+    let orderPage = 1, productPage = 1, materialPage = 1, workPage = 1;
+    let selectedOrderIds = [], selectedProductNames = [], selectedMaterialKeys = [], selectedWorkIds = [];
+
+    function addLog(content){
+      logs.unshift({time:new Date().toLocaleString(),content});
+      if(logs.length>100) logs.pop();
+      save();
+      renderLogs();
+    }
+    function clearLogs(){
+      if(confirm('确定要清空所有日志吗？')){
+        logs=[];save();renderLogs();
+      }
+    }
+    function save(){
+      localStorage.setItem('orders',JSON.stringify(orders));
+      localStorage.setItem('products',JSON.stringify(products));
+      localStorage.setItem('materials',JSON.stringify(materials));
+      localStorage.setItem('boms',JSON.stringify(boms));
+      localStorage.setItem('works',JSON.stringify(works));
+      localStorage.setItem('complaints',JSON.stringify(complaints));
+      localStorage.setItem('qualities',JSON.stringify(qualities));
+      localStorage.setItem('logs',JSON.stringify(logs));
+    }
+
+    function selectAll(type){
+      let data = [];
+      let size = 10;
+      if(type==='order'){ data=getFilteredOrders(); size=orderPageSize; }
+      if(type==='product'){ data=getFilteredProducts(); size=productPageSize; }
+      if(type==='material'){ data=getFilteredMaterials(); size=materialPageSize; }
+      if(type==='work'){ data=getFilteredWorks(); size=workPageSize; }
+
+      let start = 0, end = Math.min(data.length, size);
+      if(type==='order') selectedOrderIds=data.slice(start,end).map(x=>x.id);
+      if(type==='product') selectedProductNames=data.slice(start,end).map(x=>x.name);
+      if(type==='material') selectedMaterialKeys=data.slice(start,end).map(x=>x.name+'|'+(x.model||''));
+      if(type==='work') selectedWorkIds=data.slice(start,end).map(x=>x.id);
+
+      if(type==='order') renderOrders();
+      if(type==='product') renderProducts();
+      if(type==='material') renderMaterials();
+      if(type==='work') renderWorks();
+    }
+    function selectOne(type, key){
+      if(type==='order'){
+        let idx = selectedOrderIds.indexOf(key);
+        if(idx>-1) selectedOrderIds.splice(idx,1);
+        else selectedOrderIds.push(key);
+        renderOrders();
+      }
+      if(type==='product'){
+        let idx = selectedProductNames.indexOf(key);
+        if(idx>-1) selectedProductNames.splice(idx,1);
+        else selectedProductNames.push(key);
+        renderProducts();
+      }
+      if(type==='material'){
+        let idx = selectedMaterialKeys.indexOf(key);
+        if(idx>-1) selectedMaterialKeys.splice(idx,1);
+        else selectedMaterialKeys.push(key);
+        renderMaterials();
+      }
+      if(type==='work'){
+        let idx = selectedWorkIds.indexOf(key);
+        if(idx>-1) selectedWorkIds.splice(idx,1);
+        else selectedWorkIds.push(key);
+        renderWorks();
+      }
+    }
+
+    function changeOrderPageSize(val){
+      orderPageSize = parseInt(val)||10;
+      orderPage = 1;
+      renderOrders();
+    }
+    function changeProductPageSize(val){
+      productPageSize = parseInt(val)||10;
+      productPage = 1;
+      renderProducts();
+    }
+    function changeMaterialPageSize(val){
+      materialPageSize = parseInt(val)||10;
+      materialPage = 1;
+      renderMaterials();
+    }
+    function changeWorkPageSize(val){
+      workPageSize = parseInt(val)||10;
+      workPage = 1;
+      renderWorks();
+    }
+
+    // 订单
+    function addOrder(){
+      let id=document.getElementById('orderId').value.trim();
+      let p=document.getElementById('orderProduct').value.trim();
+      let q=parseInt(document.getElementById('orderQty').value)||0;
+      let d=document.getElementById('orderDue').value;
+      if(!id||!p||!q||!d) return alert('请填写完整');
+      if(q<=0) return alert('数量必须大于0');
+      if(orders.find(x=>x.id===id)) return alert('订单号重复');
+      orders.push({id,p,q,d,status:'新订单'});
+      addLog(`新增订单：${id} ${p} ×${q}`);
+      save();renderOrders();
+      document.getElementById('orderId').value='';
+      document.getElementById('orderProduct').value='';
+      document.getElementById('orderQty').value='';
+      document.getElementById('orderDue').value='';
+    }
+    function getFilteredOrders(){
+      let filterId = document.getElementById('filterOrderId').value.trim();
+      let filterProduct = document.getElementById('filterOrderProduct').value.trim();
+      let filterStatus = document.getElementById('filterOrderStatus').value;
+      let data = orders.slice();
+      if(filterId) data = data.filter(x=>x.id.includes(filterId));
+      if(filterProduct) data = data.filter(x=>x.p.includes(filterProduct));
+      if(filterStatus) data = data.filter(x=>x.status===filterStatus);
+      return data;
+    }
+    function renderOrders(){
+      let data = getFilteredOrders();
+      let totalPages = Math.max(1,Math.ceil(data.length/orderPageSize));
+      orderPage = Math.min(orderPage,totalPages);
+      let start=(orderPage-1)*orderPageSize, end=Math.min(data.length,start+orderPageSize);
+      let h='';
+      for(let i=start;i<end;i++){
+        let o=data[i];
+        let checked = selectedOrderIds.includes(o.id) ? 'checked' : '';
+        h+=`<tr>
+          <td><input type="checkbox" onclick="selectOne('order','${o.id}')" ${checked}></td>
+          <td>${o.id}</td>
+          <td>${o.p}</td>
+          <td>${o.q}</td>
+          <td>
+            <input type="date" value="${o.d}" onchange="changeOrderDue('${o.id}', this.value)">
+          </td>
+          <td>
+            <select class="status-btn" onchange="changeOrderStatusSelect('${o.id}', this.value)">
+              <option value="新订单" ${o.status==="新订单"?"selected":""}>新订单</option>
+              <option value="生产中" ${o.status==="生产中"?"selected":""}>生产中</option>
+              <option value="已出货" ${o.status==="已出货"?"selected":""}>已出货</option>
+            </select>
+          </td>
+          <td>
+            <button type="button" class="action-btn" onclick="delOrder('${o.id}')">删除</button>
+          </td>
+          <td>
+            <button type="button" class="action-btn" onclick="openComplaint('${o.id}')">投诉</button>
+          </td>
+        </tr>`;
+      }
+      document.getElementById('orderList').innerHTML=h||'<tr><td colspan="8">暂无订单</td></tr>';
+      let pageHtml = '';
+      for(let i=1;i<=totalPages;i++){
+        pageHtml += `<button type="button" class="page-btn" ${orderPage===i?'disabled':''} onclick="orderPage=${i};renderOrders()">${i}</button>`;
+      }
+      document.getElementById('orderPage').innerHTML = pageHtml;
+    }
+    function changeOrderStatusSelect(id, val){
+      let o = orders.find(x=>x.id===id);
+      if(o){
+        o.status = val;
+        addLog(`订单状态变更：${o.id} → ${val}`);
+        save();
+        renderOrders();
+      }
+    }
+    function changeOrderDue(id, val){
+      let o = orders.find(x=>x.id===id);
+      if(o){
+        o.d = val;
+        addLog(`订单${o.id} 交期修改为：${val}`);
+        save();
+      }
+    }
+    function delOrder(id){
+      if(confirm('确认删除该订单吗？')){
+        let idx = orders.findIndex(x=>x.id===id);
+        if(idx>-1){
+          addLog(`删除订单：${orders[idx].id} ${orders[idx].p}`);
+          orders.splice(idx,1);
+          save();renderOrders();
+        }
+      }
+    }
+    function batchDelOrder(){
+      if(selectedOrderIds.length===0) return alert('请勾选要删除的订单');
+      if(confirm('确认批量删除选中订单吗？')){
+        orders = orders.filter(o => !selectedOrderIds.includes(o.id));
+        selectedOrderIds=[];
+        save();renderOrders();
+      }
+    }
+    function openComplaint(orderId){
+      document.getElementById('complaintOrderId').value=orderId;
+      openTab('complaint');
+    }
+
+    // 成品
+    function addProduct(){
+      let name=document.getElementById('productName').value.trim();
+      let qty=parseInt(document.getElementById('productQty').value)||0;
+      if(!name||!qty) return alert('请填写完整');
+      if(qty<=0) return alert('数量必须大于0');
+      let p=products.find(x=>x.name===name);
+      if(p) p.qty+=qty; else products.push({name,qty});
+      addLog(`成品入库：${name} +${qty}`);
+      save();renderProducts();
+      document.getElementById('productName').value='';
+      document.getElementById('productQty').value='';
+    }
+    function getFilteredProducts(){
+      let filterName = document.getElementById('filterProductName').value.trim();
+      let data = filterName ? products.filter(p=>p.name.includes(filterName)) : products.slice();
+      return data;
+    }
+    function renderProducts(){
+      let data = getFilteredProducts();
+      let totalPages = Math.max(1,Math.ceil(data.length/productPageSize));
+      productPage = Math.min(productPage,totalPages);
+      let start=(productPage-1)*productPageSize, end=Math.min(data.length,start+productPageSize);
+      let h='';
+      for(let i=start;i<end;i++){
+        let p=data[i];
+        let checked = selectedProductNames.includes(p.name) ? 'checked' : '';
+        h+=`<tr>
+          <td><input type="checkbox" onclick="selectOne('product','${p.name}')" ${checked}></td>
+          <td>${p.name}</td>
+          <td>
+            <input type="number" min="0" value="${p.qty}" style="width:70px" onchange="changeProductQty('${p.name}', this.value)">
+          </td>
+          <td>
+            <button type="button" class="action-btn" onclick="delProduct('${p.name}')">删除</button>
+          </td>
+          <td>
+            <button type="button" class="action-btn" onclick="openQuality('${p.name}')">品质问题</button>
+          </td>
+        </tr>`;
+      }
+      document.getElementById('productList').innerHTML=h||'<tr><td colspan="5">暂无成品</td></tr>';
+      let pageHtml = '';
+      for(let i=1;i<=totalPages;i++){
+        pageHtml += `<button type="button" class="page-btn" ${productPage===i?'disabled':''} onclick="productPage=${i};renderProducts()">${i}</button>`;
+      }
+      document.getElementById('productPage').innerHTML = pageHtml;
+    }
+    function changeProductQty(name, val){
+      let qty = parseInt(val)||0;
+      if(qty<0) qty=0;
+      let p = products.find(x=>x.name===name);
+      if(p){
+        p.qty = qty;
+        addLog(`成品库存修改：${p.name} → ${qty}`);
+        save();
+      }
+    }
+    function delProduct(name){
+      if(confirm('确认删除该成品吗？')){
+        let idx = products.findIndex(x=>x.name===name);
+        if(idx>-1){
+          addLog(`删除成品：${products[idx].name}`);
+          products.splice(idx,1);
+          save();renderProducts();
+        }
+      }
+    }
+    function batchDelProduct(){
+      if(selectedProductNames.length===0) return alert('请勾选要删除的成品');
+      if(confirm('确认批量删除选中成品吗？')){
+        products = products.filter(p => !selectedProductNames.includes(p.name));
+        selectedProductNames=[];
+        save();renderProducts();
+      }
+    }
+    function openQuality(productName){
+      document.getElementById('qualityProduct').value=productName;
+      openTab('quality');
+    }
+
+    // 原材料
+    function addMaterialIn(){
+      let name=document.getElementById('materialName').value.trim();
+      let qty=parseInt(document.getElementById('materialQty').value)||0;
+      let model=document.getElementById('materialModel').value.trim();
+      if(!name||!qty) return alert('请填写完整');
+      if(qty<=0) return alert('数量必须大于0');
+      let m=materials.find(x=>x.name===name && (model?x.model===model:true));
+      if(m) m.qty+=qty;
+      else materials.push({name,qty,model});
+      addLog(`原材料入库：${name} +${qty} ${model}`);
+      save();renderMaterials();
+      document.getElementById('materialName').value='';
+      document.getElementById('materialQty').value='';
+      document.getElementById('materialModel').value='';
+    }
+    function importMaterialFile(event){
+      const file = event.target.files[0];
+      if(!file) return;
+      if(file.name.endsWith('.csv')){
+        const reader = new FileReader();
+        reader.onload = function(e){
+          const text = e.target.result;
+          const lines = text.split(/\r?\n/);
+          let count = 0;
+          lines.forEach(line=>{
+            if(!line.trim()) return;
+            const [name, qty, model] = line.split(/,|\t/).map(x=>x.trim());
+            if(name && qty){
+              let m = materials.find(x=>x.name===name && (model?x.model===model:true));
+              if(m){
+                m.qty += parseInt(qty)||0;
+                if(model) m.model = model;
+              }else{
+                materials.push({name,qty:parseInt(qty)||0,model:model||''});
+              }
+              count++;
+            }
+          });
+          addLog(`原材料导入：成功导入${count}条数据`);
+          save();
+          renderMaterials();
+          event.target.value = '';
+          alert(`成功导入${count}条原材料数据！`);
+        };
+        reader.readAsText(file,'utf-8');
+      }else if(file.type.startsWith('image/')){
+        Tesseract.recognize(file, 'chi_sim').then(({data:{text}})=>{
+          let lines = text.split(/\r?\n/);
+          let count = 0;
+          lines.forEach(line=>{
+            if(!line.trim()) return;
+            let arr = line.split(/[\s,，]+/);
+            if(arr.length<2) return;
+            let name = arr[0], qty = parseInt(arr[1])||0, model = arr[2]||'';
+            if(name && qty){
+              let m = materials.find(x=>x.name===name && (model?x.model===model:true));
+              if(m){
+                m.qty += qty;
+                if(model) m.model = model;
+              }else{
+                materials.push({name,qty,model});
+              }
+              count++;
+            }
+          });
+          addLog(`原材料图片识别导入：成功导入${count}条数据`);
+          save();
+          renderMaterials();
+          event.target.value = '';
+          alert(`图片识别导入${count}条原材料数据！`);
+        });
+      }
+    }
+    function getFilteredMaterials(){
+      let filterName = document.getElementById('filterMaterialName').value.trim();
+      let filterModel = document.getElementById('filterMaterialModel').value.trim();
+      let data = materials.slice();
+      if(filterName) data = data.filter(m=>m.name.includes(filterName));
+      if(filterModel) data = data.filter(m=>m.model && m.model.includes(filterModel));
+      return data;
+    }
+    function renderMaterials(){
+      let data = getFilteredMaterials();
+      let totalPages = Math.max(1,Math.ceil(data.length/materialPageSize));
+      materialPage = Math.min(materialPage,totalPages);
+      let start=(materialPage-1)*materialPageSize, end=Math.min(data.length,start+materialPageSize);
+      let h='';
+      for(let i=start;i<end;i++){
+        let m=data[i];
+        let key = m.name+'|'+(m.model||'');
+        let checked = selectedMaterialKeys.includes(key) ? 'checked' : '';
+        h+=`<tr>
+          <td><input type="checkbox" onclick="selectOne('material','${key}')" ${checked}></td>
+          <td>${m.name}</td>
+          <td>
+            <input type="number" min="0" value="${m.qty}" style="width:70px" onchange="changeMaterialQty('${key}', this.value)">
+          </td>
+          <td>${m.model||''}</td>
+          <td>
+            <button type="button" class="action-btn" onclick="delMaterial('${key}')">删除</button>
+          </td>
+        </tr>`;
+      }
+      document.getElementById('materialList').innerHTML=h||'<tr><td colspan="5">暂无原材料</td></tr>';
+      let pageHtml = '';
+      for(let i=1;i<=totalPages;i++){
+        pageHtml += `<button type="button" class="page-btn" ${materialPage===i?'disabled':''} onclick="materialPage=${i};renderMaterials()">${i}</button>`;
+      }
+      document.getElementById('materialPage').innerHTML = pageHtml;
+    }
+    function changeMaterialQty(key, val){
+      let qty = parseInt(val)||0;
+      if(qty<0) qty=0;
+      let [name,model] = key.split('|');
+      let m = materials.find(x=>x.name===name && (model?x.model===model:true));
+      if(m){
+        m.qty = qty;
+        addLog(`原材料库存修改：${m.name} → ${qty}`);
+        save();
+      }
+    }
+    function delMaterial(key){
+      if(confirm('确认删除该原材料吗？')){
+        let [name,model] = key.split('|');
+        let idx = materials.findIndex(x=>x.name===name && (model?x.model===model:true));
+        if(idx>-1){
+          addLog(`删除原材料：${materials[idx].name}`);
+          materials.splice(idx,1);
+          save();renderMaterials();
+        }
+      }
+    }
+    function batchDelMaterial(){
+      if(selectedMaterialKeys.length===0) return alert('请勾选要删除的原材料');
+      if(confirm('确认批量删除选中原材料吗？')){
+        materials = materials.filter(m => !selectedMaterialKeys.includes(m.name+'|'+(m.model||'')));
+        selectedMaterialKeys=[];
+        save();renderMaterials();
+      }
+    }
+
+    // BOM
+    function addBom(){
+      let product=document.getElementById('bomProduct').value.trim();
+      let material=document.getElementById('bomMaterial').value.trim();
+      let qty=parseInt(document.getElementById('bomQty').value)||0;
+      if(!product||!material||!qty) return alert('请填写完整');
+      boms.push({product,material,qty});
+      addLog(`新增BOM：${product} 需要 ${material} ×${qty}`);
+      save();renderBoms();
+      document.getElementById('bomProduct').value='';
+      document.getElementById('bomMaterial').value='';
+      document.getElementById('bomQty').value='';
+    }
+    function renderBoms(){
+      let h='';
+      boms.forEach((b,i)=>{
+        h+=`<tr>
+          <td>${b.product}</td>
+          <td>${b.material}</td>
+          <td>${b.qty}</td>
+          <td>
+            <button type="button" class="action-btn" onclick="delBom(${i})">删除</button>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('bomList').innerHTML=h||'<tr><td colspan="4">暂无BOM</td></tr>';
+    }
+    function delBom(i){
+      if(confirm('确认删除该BOM吗？')){
+        addLog(`删除BOM：${boms[i].product} ${boms[i].material}`);
+        boms.splice(i,1);
+        save();renderBoms();
+      }
+    }
+
+    // 工单
+    function addWork(){
+      let p=document.getElementById('workProduct').value.trim();
+      let q=parseInt(document.getElementById('workQty').value)||0;
+      if(!p||!q) return alert('请填写完整');
+      if(q<=0) return alert('数量必须大于0');
+      let id='WO'+(works.length+1).toString().padStart(3,'0');
+      works.push({id,p,q,status:'待生产'});
+      addLog(`新建工单：${id} ${p} ×${q}`);
+      save();renderWorks();
+      document.getElementById('workProduct').value='';
+      document.getElementById('workQty').value='';
+    }
+    function getFilteredWorks(){
+      return works.slice();
+    }
+    function renderWorks(){
+      let data = getFilteredWorks();
+      let totalPages = Math.max(1,Math.ceil(data.length/workPageSize));
+      workPage = Math.min(workPage,totalPages);
+      let start=(workPage-1)*workPageSize, end=Math.min(data.length,start+workPageSize);
+      let h='';
+      for(let i=start;i<end;i++){
+        let w=data[i];
+        let checked = selectedWorkIds.includes(w.id) ? 'checked' : '';
+        h+=`<tr>
+          <td><input type="checkbox" onclick="selectOne('work','${w.id}')" ${checked}></td>
+          <td>${w.id}</td>
+          <td>${w.p}</td>
+          <td>${w.q}</td>
+          <td>
+            <button type="button" class="status-btn" onclick="changeWorkStatus('${w.id}')">${w.status}</button>
+          </td>
+          <td>
+            <button type="button" class="action-btn" onclick="delWork('${w.id}')">删除</button>
+          </td>
+        </tr>`;
+      }
+      document.getElementById('workList').innerHTML=h||'<tr><td colspan="6">暂无工单</td></tr>';
+      let pageHtml = '';
+      for(let i=1;i<=totalPages;i++){
+        pageHtml += `<button type="button" class="page-btn" ${workPage===i?'disabled':''} onclick="workPage=${i};renderWorks()">${i}</button>`;
+      }
+      document.getElementById('workPage').innerHTML = pageHtml;
+    }
+    function changeWorkStatus(id){
+      const w=works.find(x=>x.id===id);
+      if(w){
+        let next = {'待生产':'生产中','生产中':'已完成','已完成':'待生产','已取消':'待生产'};
+        let prev=w.status;
+        w.status=next[w.status]||'待生产';
+        addLog(`工单状态变更：${w.id} ${prev}→${w.status}`);
+        save();renderWorks();
+      }
+    }
+    function delWork(id){
+      if(confirm('确认删除该工单吗？')){
+        let idx = works.findIndex(x=>x.id===id);
+        if(idx>-1){
+          addLog(`删除工单：${works[idx].id} ${works[idx].p}`);
+          works.splice(idx,1);
+          save();renderWorks();
+        }
+      }
+    }
+    function batchDelWork(){
+      if(selectedWorkIds.length===0) return alert('请勾选要删除的工单');
+      if(confirm('确认批量删除选中工单吗？')){
+        works = works.filter(w => !selectedWorkIds.includes(w.id));
+        selectedWorkIds=[];
+        save();renderWorks();
+      }
+    }
+
+    // 投诉
+    function addComplaint(){
+      let orderId=document.getElementById('complaintOrderId').value.trim();
+      let reason=document.getElementById('complaintReason').value.trim();
+      if(!orderId||!reason) return alert('请填写完整');
+      complaints.unshift({
+        orderId,
+        reason,
+        time:new Date().toLocaleString(),
+        status:'待处理'
+      });
+      addLog(`新增订单投诉：${orderId} - ${reason}`);
+      save();renderComplaints();
+      document.getElementById('complaintOrderId').value='';
+      document.getElementById('complaintReason').value='';
+    }
+    function renderComplaints(){
+      let h='';
+      complaints.forEach((c,i)=>{
+        h+=`<tr>
+          <td>${c.orderId}</td>
+          <td>${c.reason}</td>
+          <td>${c.time}</td>
+          <td>${c.status}</td>
+          <td>
+            <button type="button" class="action-btn" onclick="dealComplaint(${i})">标记处理</button>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('complaintList').innerHTML=h||'<tr><td colspan="5">暂无投诉</td></tr>';
+    }
+    function dealComplaint(i){
+      if(!complaints[i]) return;
+      complaints[i].status='已处理';
+      addLog(`投诉处理完成：${complaints[i].orderId}`);
+      save();renderComplaints();
+    }
+
+    // 品质
+    function addQuality(){
+      let product=document.getElementById('qualityProduct').value.trim();
+      let desc=document.getElementById('qualityDesc').value.trim();
+      if(!product||!desc) return alert('请填写完整');
+      qualities.unshift({
+        product,
+        desc,
+        time:new Date().toLocaleString(),
+        status:'待处理'
+      });
+      addLog(`新增品质问题：${product} - ${desc}`);
+      save();renderQualities();
+      document.getElementById('qualityProduct').value='';
+      document.getElementById('qualityDesc').value='';
+    }
+    function renderQualities(){
+      let h='';
+      qualities.forEach((q,i)=>{
+        h+=`<tr>
+          <td>${q.product}</td>
+          <td>${q.desc}</td>
+          <td>${q.time}</td>
+          <td>${q.status}</td>
+          <td>
+            <button type="button" class="action-btn" onclick="dealQuality(${i})">标记处理</button>
+          </td>
+        </tr>`;
+      });
+      document.getElementById('qualityList').innerHTML=h||'<tr><td colspan="5">暂无品质问题</td></tr>';
+    }
+    function dealQuality(i){
+      if(!qualities[i]) return;
+      qualities[i].status='已处理';
+      addLog(`品质问题处理完成：${qualities[i].product}`);
+      save();renderQualities();
+    }
+
+    // 报表
+    function renderReport(){
+      let totalOrders = orders.length;
+      let totalProducts = products.reduce((s,p)=>s+p.qty,0);
+      let totalMaterials = materials.reduce((s,m)=>s+m.qty,0);
+      let totalWorks = works.length;
+      let html = `
+        <div class="group-title">基础统计</div>
+        <p>订单数量：${totalOrders}</p>
+        <p>成品库存总量：${totalProducts}</p>
+        <p>原材料库存总量：${totalMaterials}</p>
+        <p>工单数量：${totalWorks}</p>
+      `;
+      document.getElementById('reportContent').innerHTML = html;
+    }
+
+    // 日志
+    function renderLogs(){
+      let h='';
+      logs.forEach(l=>{
+        h+=`<tr>
+          <td>${l.time}</td>
+          <td>${l.content}</td>
+        </tr>`;
+      });
+      document.getElementById('logList').innerHTML=h||'<tr><td colspan="2">暂无日志</td></tr>';
+    }
+  </script>
+</body>
+</html>
